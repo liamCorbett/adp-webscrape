@@ -120,17 +120,15 @@ class ADPResource:
         self.driver.switch_to.window(self.driver.window_handles[2])
 
         # Locates filename field and enters filename for download.
+        timestamp = datetime.today().strftime('%Y-%m-%d-%H%M%S')
+        file_name = f'{prefix}-{timestamp}' if prefix else timestamp
+
         filename_field = WebDriverWait(self.driver, 20).until(
             conditions.presence_of_element_located((By.ID, 'txt_fldFileName'))
         )
+        filename_field.send_keys(file_name)
+
         filename_submit = self.driver.find_element_by_id('btnSubmit')
-
-        timestamp = datetime.today().strftime('%Y-%m-%d-%H%M%S')
-
-        if prefix:
-            filename_field.send_keys(f'{prefix}-{timestamp}')
-        else:
-            filename_field.send_keys(f'{prefix}-{timestamp}')
         filename_submit.click()
 
         # ".part" files indicate that a file hasn't finished downloading.
@@ -138,8 +136,9 @@ class ADPResource:
         # of a .part file and will break if it disappears. Though it times out
         # if the download takes longer than 60 seconds.
         timeout = time.time() + 60
-        file_path = f'{self.download_path}\\{prefix}-{timestamp}.csv'
-        file_part_path = f'{self.download_path}\\{prefix}-{timestamp}.csv.part'
+
+        file_path = f'{self.download_path}\\{file_name}.csv'
+        file_part_path = f'{self.download_path}\\{file_name}.csv.part'
 
         while time.time() < timeout:
             if os.path.isfile(file_part_path):
