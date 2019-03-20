@@ -9,7 +9,7 @@ Usage
 
 Installation
 ------------
-In a command prompt, enter ``pip install adp-webscrape``.
+With Python 3.6 or greater installed, in a command prompt: enter ``pip install adp-webscrape``. You'll also need a recent edition of Firefox and its respective GeckoDriver added to PATH, or to the root folder of the project.
 
 Code
 ----
@@ -19,17 +19,19 @@ Use the following code, replacing my_username, my_password, my_download_path, an
 - ``my_password``: Your ADP Resource password
 - ``my_download_path``: (optional) The path that Selenium's browser will download reports to (e.g ``C:\adp-reports``). Ommiting defaults to the user's download folder.
 - ``my_isi_client_id``: This can be found at the end of the url for any ezLaborManager page. Most likely, it's going to be your company name (probably spaced out by hyphens if the name is multiple words).
+- ``my_report_index``: On the ezLaborManager "My Reports" page, this will be the index of the report you want to download (with the first report starting at index 0) https://i.imgur.com/Tg7kPQV.png
 
 .. code-block:: python
 
-    from adp-webscrape import ADPResource
+    from adpwebscrape import ADPResource
     
     
     adp_resource = ADPResource('my_username', 'my_password', 
                                isi_client_id='my_isi_client_id',
                                download_path=r'my_download_path') 
                                
-    adp_resource.download_timecard_csv() # returns filename
+    adp_resource.download_my_report(my_report_index) #returns Filename
+    # e.g adp_resource.download_my_report(0)
 
 Other
 =====

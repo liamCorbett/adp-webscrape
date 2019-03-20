@@ -12,20 +12,30 @@ class ADPResource:
     RESOURCE_LOGIN_URL = 'https://online.adp.com/resource/login.html'
     EZLABORMANAGER_URL = 'https://ezlmportaldc1f.adp.com/ezLaborManagerNetRedirect/MAPortalStart.aspx?ISIClientID='
 
-    def __init__(self, username, password, download_path=None, isi_client_id=None):
+    def __init__(self, username, password,
+                 download_path=None, isi_client_id=None, headless=True):
         self.username = username
         self.password = password
         self.download_path = download_path
         self.isi_client_id = isi_client_id
+        self.headless = headless
 
         self.driver = self.driver_init()
 
         self.log_in()
 
+        try:
+            if self.download_path[-1] == '/' or self.download_path[-1] == '\\':
+                self.download_path = self.download_path[0:-1]
+        except (IndexError, TypeError):
+            self.download_path = None
+
     def driver_init(self):
-        # Sets Firefox options; browser will run 'headless' (disabled GUI).
+        # Sets Firefox options; browser will run 'headless' (disabled GUI)
+        # by default unless the object is initialized with "headless" set
+        # to False.
         options = webdriver.FirefoxOptions()
-        options.headless = False
+        options.headless = self.headless
 
         # Sets Firefox profile; sets DL path, disables "Open or Save as" menu.
         fp = webdriver.FirefoxProfile()
@@ -65,16 +75,15 @@ class ADPResource:
         password_field = self.driver.find_element_by_id('password')
         login_submit = self.driver.find_element_by_id('subBtn')
 
-        # Types username & password from credentials.py
+        # Submits login info
         username_field.clear()
         password_field.clear()
         username_field.send_keys(self.username)
         password_field.send_keys(self.password)
 
-        # Submits login info
         login_submit.click()
 
-    def download_timecard_csv(self, isi_client_id=None):
+    def download_my_report(self, report_index, prefix='', isi_client_id=None):
 
         isi_client_id = isi_client_id or self.isi_client_id
 
@@ -96,19 +105,21 @@ class ADPResource:
         WebDriverWait(self.driver, 20).until(conditions.new_window_is_opened)
         self.driver.switch_to.window(self.driver.window_handles[1])
 
-        # Clicks download button for timecard report.
-        timecard_button = WebDriverWait(self.driver, 20).until(
+        # Waits on and clicks download button for timecard report.
+        WebDriverWait(self.driver, 20).until(
             conditions.presence_of_element_located(
-                (By.NAME, 'UI4:ctBody:grdMyReports:_ctl3:btnDownloadReport')
+                (By.ID, 'btnDownloadReport')
             )
         )
-        timecard_button.click()
+        download_buttons = self.driver.find_elements_by_id('btnDownloadReport')
+        download_button = download_buttons[report_index]
+        download_button.click()
 
         # Focuses third tab after waiting for up to 20 seconds for it to load.
         WebDriverWait(self.driver, 20).until(conditions.new_window_is_opened)
         self.driver.switch_to.window(self.driver.window_handles[2])
 
-        # Locates filename field and enters current datetime for download.
+        # Locates filename field and enters filename for download.
         filename_field = WebDriverWait(self.driver, 20).until(
             conditions.presence_of_element_located((By.ID, 'txt_fldFileName'))
         )
@@ -116,7 +127,10 @@ class ADPResource:
 
         timestamp = datetime.today().strftime('%Y-%m-%d-%H%M%S')
 
-        filename_field.send_keys(timestamp)
+        if prefix:
+            filename_field.send_keys(f'{prefix}-{timestamp}')
+        else:
+            filename_field.send_keys(f'{prefix}-{timestamp}')
         filename_submit.click()
 
         # ".part" files indicate that a file hasn't finished downloading.
@@ -124,8 +138,8 @@ class ADPResource:
         # of a .part file and will break if it disappears. Though it times out
         # if the download takes longer than 60 seconds.
         timeout = time.time() + 60
-        file_path = self.download_path + '\\' + timestamp + '.csv'
-        file_part_path = self.download_path + '\\' + timestamp + '.csv.part'
+        file_path = f'{self.download_path}\\{prefix}-{timestamp}.csv'
+        file_part_path = f'{self.download_path}\\{prefix}-{timestamp}.csv.part'
 
         while time.time() < timeout:
             if os.path.isfile(file_part_path):
@@ -141,11 +155,6 @@ class ADPResource:
             assert False, "Download of file timed out."
 
         return file_path
-
-    def close_all(self):
-        for window in self.driver.window_handles:
-            self.driver.switch_to.window(window)
-            self.driver.close()
 
     def quit(self):
         self.driver.quit()
