@@ -1,8 +1,13 @@
 [tool.poetry]
 name = "adp-webscrape"
 version = "0.1.0"
-description = ""
+readme = "README.rst"
+description = "Log into and download reports from ADP Resource and ezLaborManager."
 authors = ["Liam Corbett"]
+license = "MIT"
+packages = [
+    { include = "adpwebscrape" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.7"

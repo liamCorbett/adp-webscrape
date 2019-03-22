@@ -9,7 +9,9 @@ Usage
 
 Installation
 ------------
-With Python 3.6 or greater installed, in a command prompt: enter ``pip install adp-webscrape``. You'll also need a recent edition of Firefox and its respective GeckoDriver. The GeckoDriver must be added to PATH, or to the root folder of the project.
+With Python 3.6 or greater installed, in a command prompt: enter ``pip install adp-webscrape``. You'll also need a recent edition of Firefox and its respective GeckoDriver_. The GeckoDriver must be added to PATH, or to the root folder of the project.
+
+.. _GeckoDriver: https://github.com/mozilla/geckodriver/releases
 
 Code
 ----
